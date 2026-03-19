@@ -1,0 +1,162 @@
+@page "/books"
+@using LibraryBlazorApp.Models
+@using System.Net.Http.Json
+@inject HttpClient Http
+@inject ISnackbar Snackbar
+@inject IDialogService DialogService
+
+<PageTitle>Books</PageTitle>
+
+<MudText Typo="Typo.h3" GutterBottom="true">Books</MudText>
+
+<MudPaper Class="pa-4 mb-4">
+    <MudGrid>
+        <MudItem xs="12" md="8">
+            <MudTextField @bind-Value="searchString" Placeholder="Search books..." 
+                         Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" 
+                         IconSize="Size.Medium" Immediate="true" />
+        </MudItem>
+        <MudItem xs="12" md="4" Class="d-flex justify-end">
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" 
+                      StartIcon="@Icons.Material.Filled.Add" OnClick="OpenAddDialog">
+                Add Book
+            </MudButton>
+        </MudItem>
+    </MudGrid>
+</MudPaper>
+
+@if (loading)
+{
+    <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
+}
+else if (books == null || !books.Any())
+{
+    <MudAlert Severity="Severity.Info">No books found</MudAlert>
+}
+else
+{
+    <MudGrid>
+        @foreach (var book in FilteredBooks)
+        {
+            <MudItem xs="12" sm="6" md="4">
+                <MudCard Elevation="2">
+                    <MudCardContent>
+                        <MudText Typo="Typo.h6">@book.Title</MudText>
+                        <MudText Typo="Typo.body2" Color="Color.Secondary">by @book.Author</MudText>
+                        
+                        <MudDivider Class="my-2" />
+                        
+                        <MudText Typo="Typo.body2"><strong>ISBN:</strong> @book.ISBN</MudText>
+                        <MudText Typo="Typo.body2"><strong>Category:</strong> @book.Category</MudText>
+                        <MudText Typo="Typo.body2"><strong>Published:</strong> @book.PublishedYear</MudText>
+                        <MudText Typo="Typo.body2"><strong>Available:</strong> @book.AvailableCopies / @book.TotalCopies</MudText>
+
+                        <MudChip T="string" Variant="Variant.Outlined" Class="mt-2" Color="@(book.AvailableCopies > 0 ? Color.Success : Color.Error)" Size="Size.Small">
+                            @(book.AvailableCopies > 0 ? "Available" : "Not Available")
+                        </MudChip>
+                    </MudCardContent>
+                    <MudCardActions>
+                        <MudButton Size="Size.Small" Color="Color.Primary" OnClick="@(() => ViewDetails(book))">
+                            Details
+                        </MudButton>
+                        <MudSpacer />
+                        <MudIconButton Size="Size.Small" Color="Color.Error" Icon="@Icons.Material.Filled.Delete" OnClick="@(() => DeleteBook(book))" />
+                    </MudCardActions>
+                </MudCard>
+            </MudItem>
+        }
+    </MudGrid>
+}
+
+@code {
+    private List<Book> books = new();
+    private bool loading = true;
+    private string searchString = "";
+
+    private IEnumerable<Book> FilteredBooks => 
+        string.IsNullOrWhiteSpace(searchString) 
+            ? books 
+            : books.Where(b => b.Title.Contains(searchString, StringComparison.OrdinalIgnoreCase) || 
+                              b.Author.Contains(searchString, StringComparison.OrdinalIgnoreCase));
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadBooks();
+    }
+
+    private async Task LoadBooks()
+    {
+        loading = true;
+        try
+        {
+            books = await Http.GetFromJsonAsync<List<Book>>("books") ?? new();
+            Snackbar.Add($"Loaded {books.Count} books", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error loading books: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            loading = false;
+        }
+    }
+
+    private async Task OpenAddDialog()
+    {
+        var parameters = new DialogParameters();
+        var options = new DialogOptions { MaxWidth = MaxWidth.Medium, FullWidth = true };
+
+        var dialog = await DialogService.ShowAsync<AddBookDialog>("Add New Book", parameters, options);
+        var result = await dialog.Result;
+
+        if (!result.Canceled)
+        {
+            await LoadBooks();
+        }
+    }
+
+    private async Task ViewDetails(Book book)
+    {
+        await DialogService.ShowMessageBox("Book Details", $"Title: {book.Title}\nAuthor: {book.Author}\nISBN: {book.ISBN}\nDescription: {book.Description}");
+    }
+
+    private async Task DeleteBook(Book book)
+    {
+        bool? result = await DialogService.ShowMessageBox(
+            "Delete Book", 
+            $"Are you sure you want to delete '{book.Title}'?", 
+            yesText: "Delete", cancelText: "Cancel");
+            
+        if (result == true)
+        {
+            try
+            {
+                var response = await Http.DeleteAsync($"books/{book.Id}");
+                if (response.IsSuccessStatusCode)
+                {
+                    Snackbar.Add("Book deleted successfully", Severity.Success);
+                    await LoadBooks();
+                }
+                else
+                {
+                    var msg = await response.Content.ReadAsStringAsync();
+                    try 
+                    {
+                        var errorObj = System.Text.Json.JsonDocument.Parse(msg);
+                        var errorMsg = errorObj.RootElement.GetProperty("errors")[0].GetString();
+                        Snackbar.Add(errorMsg, Severity.Warning);
+                    }
+                    catch
+                    {
+                        Snackbar.Add($"Failed to delete book: {msg}", Severity.Error);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Snackbar.Add($"Error: {ex.Message}", Severity.Error);
+            }
+        }
+    }
+}

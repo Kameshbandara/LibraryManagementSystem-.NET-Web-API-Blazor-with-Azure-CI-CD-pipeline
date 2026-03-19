@@ -1,0 +1,174 @@
+@page "/members"
+@using LibraryBlazorApp.Models
+@using System.Net.Http.Json
+@inject HttpClient Http
+@inject ISnackbar Snackbar
+@inject IDialogService DialogService
+
+<PageTitle>Members</PageTitle>
+
+<MudText Typo="Typo.h3" GutterBottom="true">Members</MudText>
+
+<MudPaper Class="pa-4 mb-4">
+    <MudGrid>
+        <MudItem xs="12" md="8">
+            <MudTextField @bind-Value="searchString" Placeholder="Search members..." 
+                         Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" 
+                         IconSize="Size.Medium" Immediate="true" />
+        </MudItem>
+        <MudItem xs="12" md="4" Class="d-flex justify-end">
+            <MudButton Variant="Variant.Filled" Color="Color.Success" 
+                      StartIcon="@Icons.Material.Filled.PersonAdd" OnClick="OpenAddDialog">
+                Register Member
+            </MudButton>
+        </MudItem>
+    </MudGrid>
+</MudPaper>
+
+@if (loading)
+{
+    <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
+}
+else if (members == null || !members.Any())
+{
+    <MudAlert Severity="Severity.Info">No members found</MudAlert>
+}
+else
+{
+    <MudTable Items="@FilteredMembers" Hover="true" Breakpoint="Breakpoint.Sm">
+        <HeaderContent>
+            <MudTh>Name</MudTh>
+            <MudTh>Date of Birth</MudTh>
+            <MudTh>Email</MudTh>
+            <MudTh>Phone</MudTh>
+            <MudTh>Member #</MudTh>
+            <MudTh>Type</MudTh>
+            <MudTh>Status</MudTh>
+            <MudTh>Actions</MudTh>
+        </HeaderContent>
+        <RowTemplate>
+            <MudTd DataLabel="Name">@context.FullName</MudTd>
+            <MudTd DataLabel="Date of Birth">@(context.DateOfBirth?.ToString("dd MMM yyyy") ?? "-")</MudTd>
+            <MudTd DataLabel="Email">@context.Email</MudTd>
+            <MudTd DataLabel="Phone">@context.PhoneNumber</MudTd>
+            <MudTd DataLabel="Member #">@context.MembershipNumber</MudTd>
+            <MudTd DataLabel="Type">
+                <MudChip T="string" Variant="Variant.Outlined" Size="Size.Small" Color="@GetMembershipColor(context.MembershipType)">
+                    @context.MembershipType
+                </MudChip>
+            </MudTd>
+            <MudTd DataLabel="Status">
+                <MudChip T="string" Variant="Variant.Outlined" Size="Size.Small" Color="@(context.IsActive? Color.Success: Color.Default)">
+                    @(context.IsActive ? "Active" : "Inactive")
+                </MudChip>
+            </MudTd>
+            <MudTd DataLabel="Actions">
+                <MudIconButton Icon="@Icons.Material.Filled.Visibility" Size="Size.Small" 
+                              Color="Color.Primary" OnClick="@(() => ViewDetails(context))" />
+                <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" 
+                              Color="Color.Error" OnClick="@(() => DeleteMember(context))" />
+            </MudTd>
+        </RowTemplate>
+    </MudTable>
+}
+
+@code {
+    private List<Member> members = new();
+    private bool loading = true;
+    private string searchString = "";
+
+    private IEnumerable<Member> FilteredMembers => 
+        string.IsNullOrWhiteSpace(searchString) 
+            ? members 
+            : members.Where(m => m.FirstName.Contains(searchString, StringComparison.OrdinalIgnoreCase) || 
+                                m.LastName.Contains(searchString, StringComparison.OrdinalIgnoreCase) ||
+                                m.Email.Contains(searchString, StringComparison.OrdinalIgnoreCase));
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadMembers();
+    }
+
+    private async Task LoadMembers()
+    {
+        loading = true;
+        try
+        {
+            members = await Http.GetFromJsonAsync<List<Member>>("members") ?? new();
+            Snackbar.Add($"Loaded {members.Count} members", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error loading members: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            loading = false;
+        }
+    }
+
+    private Color GetMembershipColor(string type) => type switch
+    {
+        "Premium" => Color.Warning,
+        "Student" => Color.Info,
+        _ => Color.Default
+    };
+
+    private async Task OpenAddDialog()
+    {
+        var parameters = new DialogParameters();
+        var options = new DialogOptions { MaxWidth = MaxWidth.Medium, FullWidth = true };
+
+        var dialog = await DialogService.ShowAsync<AddMemberDialog>("Register New Member", parameters, options);
+        var result = await dialog.Result;
+
+        if (!result.Canceled)
+        {
+            await LoadMembers();
+        }
+    }
+
+    private async Task ViewDetails(Member member)
+    {
+        await DialogService.ShowMessageBox("Member Details", $"Name: {member.FullName}\nEmail: {member.Email}\nPhone: {member.PhoneNumber}");
+    }
+
+    private async Task DeleteMember(Member member)
+    {
+        bool? result = await DialogService.ShowMessageBox(
+            "Delete Member", 
+            $"Are you sure you want to delete '{member.FullName}'?", 
+            yesText: "Delete", cancelText: "Cancel");
+            
+        if (result == true)
+        {
+            try
+            {
+                var response = await Http.DeleteAsync($"members/{member.Id}");
+                if (response.IsSuccessStatusCode)
+                {
+                    Snackbar.Add("Member deleted successfully", Severity.Success);
+                    await LoadMembers();
+                }
+                else
+                {
+                    var msg = await response.Content.ReadAsStringAsync();
+                    try 
+                    {
+                        var errorObj = System.Text.Json.JsonDocument.Parse(msg);
+                        var errorMsg = errorObj.RootElement.GetProperty("errors")[0].GetString();
+                        Snackbar.Add(errorMsg, Severity.Warning);
+                    }
+                    catch
+                    {
+                        Snackbar.Add($"Failed to delete member: {msg}", Severity.Error);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Snackbar.Add($"Error: {ex.Message}", Severity.Error);
+            }
+        }
+    }
+}

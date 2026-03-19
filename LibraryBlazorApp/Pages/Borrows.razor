@@ -1,0 +1,146 @@
+@page "/borrows"
+@using LibraryBlazorApp.Models
+@using System.Net.Http.Json
+@inject HttpClient Http
+@inject ISnackbar Snackbar
+@inject IDialogService DialogService
+
+<PageTitle>Active Borrows</PageTitle>
+
+<MudText Typo="Typo.h3" GutterBottom="true">Active Borrows</MudText>
+
+<MudPaper Class="pa-4 mb-4">
+    <MudButton Variant="Variant.Filled" Color="Color.Primary" 
+              StartIcon="@Icons.Material.Filled.Add" OnClick="OpenBorrowDialog">
+        Borrow Book
+    </MudButton>
+</MudPaper>
+
+@if (loading)
+{
+    <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
+}
+else if (borrows == null || !borrows.Any())
+{
+    <MudAlert Severity="Severity.Info">No active borrows</MudAlert>
+}
+else
+{
+    <MudGrid>
+        @foreach (var borrow in borrows)
+        {
+            <MudItem xs="12">
+                <MudCard Elevation="2">
+                    <MudCardContent>
+                        <MudGrid>
+                            <MudItem xs="12" md="8">
+                                <MudText Typo="Typo.h6">@borrow.Book?.Title</MudText>
+                                <MudText Typo="Typo.body2" Color="Color.Secondary">
+                                    by @borrow.Book?.Author
+                                </MudText>
+                                
+                                <MudDivider Class="my-2" />
+                                
+                                <MudText Typo="Typo.body2">
+                                    <strong>Borrowed by:</strong> @borrow.Member?.FullName
+                                </MudText>
+                                <MudText Typo="Typo.body2">
+                                    <strong>Borrow Date:</strong> @borrow.BorrowDate.ToShortDateString()
+                                </MudText>
+                                <MudText Typo="Typo.body2">
+                                    <strong>Due Date:</strong> @borrow.DueDate.ToShortDateString()
+                                </MudText>
+                                <MudText Typo="Typo.body2">
+                                    <strong>Status:</strong>
+                                    <MudChip T="string" Size="Size.Small" Color="Color.Info">@borrow.Status</MudChip>
+                                </MudText>
+                            </MudItem>
+                            <MudItem xs="12" md="4" Class="d-flex flex-column align-end justify-center">
+                                @if (borrow.IsOverdue)
+                                {
+                                    <MudText Typo="Typo.h6" Color="Color.Error" Class="mb-2">
+                                        <b>@borrow.DaysOverdue</b> Days Overdue!
+                                    </MudText>
+                                }
+                                else
+                                {
+                                    <MudText Typo="Typo.h6" Color="Color.Primary" Class="mb-2">
+                                        <b>@borrow.DaysRemaining</b> Days Remaining
+                                    </MudText>
+                                }
+                                <MudButton Variant="Variant.Filled" Color="Color.Success" 
+                                          StartIcon="@Icons.Material.Filled.CheckCircle"
+                                          OnClick="@(() => ReturnBook(borrow.Id))">
+                                    Return Book
+                                </MudButton>
+                            </MudItem>
+                        </MudGrid>
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+        }
+    </MudGrid>
+}
+
+@code {
+    private List<BorrowRecord> borrows = new();
+    private bool loading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadBorrows();
+    }
+
+    private async Task LoadBorrows()
+    {
+        loading = true;
+        try
+        {
+            borrows = await Http.GetFromJsonAsync<List<BorrowRecord>>("borrow/active") ?? new();
+            Snackbar.Add($"Loaded {borrows.Count} active borrows", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error loading borrows: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            loading = false;
+        }
+    }
+
+    private async Task ReturnBook(int borrowId)
+    {
+        try
+        {
+            var response = await Http.PostAsync($"borrow/{borrowId}/return", null);
+            if (response.IsSuccessStatusCode)
+            {
+                Snackbar.Add("Book returned successfully!", Severity.Success);
+                await LoadBorrows();
+            }
+            else
+            {
+                Snackbar.Add("Failed to return book", Severity.Error);
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private async Task OpenBorrowDialog()
+    {
+        var parameters = new DialogParameters();
+        var options = new DialogOptions { MaxWidth = MaxWidth.Medium, FullWidth = true };
+
+        var dialog = await DialogService.ShowAsync<BorrowBookDialog>("Borrow Book", parameters, options);
+        var result = await dialog.Result;
+
+        if (!result.Canceled)
+        {
+            await LoadBorrows();
+        }
+    }
+}

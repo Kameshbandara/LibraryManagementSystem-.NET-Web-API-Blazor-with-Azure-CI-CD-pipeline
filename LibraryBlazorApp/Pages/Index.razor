@@ -1,0 +1,76 @@
+﻿@page "/"
+
+<PageTitle>Home - Library Management</PageTitle>
+
+<MudText Typo="Typo.h3" GutterBottom="true">Welcome to Library Management System</MudText>
+
+<MudGrid>
+    <MudItem xs="12" sm="6" md="4">
+        <MudCard Elevation="2" Class="pa-4">
+            <MudCardContent>
+                <MudIcon Icon="@Icons.Material.Filled.Book" Color="Color.Primary" Size="Size.Large" />
+                <MudText Typo="Typo.h5" Class="mt-4">Manage Books</MudText>
+                <MudText Typo="Typo.body2" Class="mt-2">
+                    Add, edit, and track your library's book collection
+                </MudText>
+            </MudCardContent>
+            <MudCardActions>
+                <MudButton Variant="Variant.Text" Color="Color.Primary" Href="/books">
+                    View Books
+                </MudButton>
+            </MudCardActions>
+        </MudCard>
+    </MudItem>
+
+    <MudItem xs="12" sm="6" md="4">
+        <MudCard Elevation="2" Class="pa-4">
+            <MudCardContent>
+                <MudIcon Icon="@Icons.Material.Filled.People" Color="Color.Secondary" Size="Size.Large" />
+                <MudText Typo="Typo.h5" Class="mt-4">Manage Members</MudText>
+                <MudText Typo="Typo.body2" Class="mt-2">
+                    Register and manage library members
+                </MudText>
+            </MudCardContent>
+            <MudCardActions>
+                <MudButton Variant="Variant.Text" Color="Color.Secondary" Href="/members">
+                    View Members
+                </MudButton>
+            </MudCardActions>
+        </MudCard>
+    </MudItem>
+
+    <MudItem xs="12" sm="6" md="4">
+        <MudCard Elevation="2" Class="pa-4">
+            <MudCardContent>
+                <MudIcon Icon="@Icons.Material.Filled.SwapHoriz" Color="Color.Tertiary" Size="Size.Large" />
+                <MudText Typo="Typo.h5" Class="mt-4">Track Borrows</MudText>
+                <MudText Typo="Typo.body2" Class="mt-2">
+                    Monitor borrowed books and returns
+                </MudText>
+            </MudCardContent>
+            <MudCardActions>
+                <MudButton Variant="Variant.Text" Color="Color.Tertiary" Href="/borrows">
+                    View Borrows
+                </MudButton>
+            </MudCardActions>
+        </MudCard>
+    </MudItem>
+</MudGrid>
+
+<MudDivider Class="my-8" />
+
+<MudText Typo="Typo.h5" GutterBottom="true">Features</MudText>
+<MudList T="string">
+    <MudListItem Icon="@Icons.Material.Filled.CheckCircle">
+        <MudText>Borrow and return tracking system</MudText>
+    </MudListItem>
+    <MudListItem Icon="@Icons.Material.Filled.CheckCircle">
+        <MudText>Real-time availability updates</MudText>
+    </MudListItem>
+    <MudListItem Icon="@Icons.Material.Filled.CheckCircle">
+        <MudText>Fine calculation for overdue books</MudText>
+    </MudListItem>
+    <MudListItem Icon="@Icons.Material.Filled.CheckCircle">
+        <MudText>Search and filter functionality</MudText>
+    </MudListItem>
+</MudList>

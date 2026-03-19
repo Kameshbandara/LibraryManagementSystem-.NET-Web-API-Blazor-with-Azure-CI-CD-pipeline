@@ -1,0 +1,148 @@
+﻿@using LibraryBlazorApp.Models
+@using System.Net.Http.Json
+@inject HttpClient Http
+@inject ISnackbar Snackbar
+
+<MudDialog>
+    <DialogContent>
+        <MudForm @ref="form" @bind-IsValid="@success">
+            <MudGrid>
+                <MudItem xs="12">
+                    <MudSelect T="int" @bind-Value="selectedMemberId" Label="Select Member" Required="true"
+                               RequiredError="Member is required!">
+                        @if (members != null)
+                        {
+                            @foreach (var member in members)
+                            {
+                                <MudSelectItem T="int" Value="@member.Id">
+                                    @member.FullName (@member.MembershipNumber)
+                                </MudSelectItem>
+                            }
+                        }
+                    </MudSelect>
+                </MudItem>
+                <MudItem xs="12">
+                    <MudSelect T="int" @bind-Value="selectedBookId" Label="Select Book" Required="true"
+                               RequiredError="Book is required!">
+                        @if (availableBooks != null)
+                        {
+                            @foreach (var book in availableBooks)
+                            {
+                                <MudSelectItem T="int" Value="@book.Id">
+                                    @book.Title by @book.Author (Available: @book.AvailableCopies)
+                                </MudSelectItem>
+                            }
+                        }
+                    </MudSelect>
+                </MudItem>
+                <MudItem xs="12">
+                    <MudNumericField @bind-Value="daysToReturn" Label="Days to Return"
+                                     Min="1" Max="90" Required="true" />
+                    <MudText Typo="Typo.caption">
+                        Due Date: @DateTime.Now.AddDays(daysToReturn).ToShortDateString()
+                    </MudText>
+                </MudItem>
+            </MudGrid>
+        </MudForm>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">Cancel</MudButton>
+        <MudButton Color="Color.Primary" OnClick="Submit" Disabled="@(!success || loading)">
+            @if (loading)
+            {
+                <MudProgressCircular Class="ms-n1" Size="Size.Small" Indeterminate="true" />
+                <MudText Class="ms-2">Processing</MudText>
+            }
+            else
+            {
+                <MudText>Borrow Book</MudText>
+            }
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter]
+    IMudDialogInstance MudDialog { get; set; }
+
+    private bool success;
+    private bool loading;
+    private MudForm form;
+
+    private List<Member> members = new();
+    private List<Book> availableBooks = new();
+
+    private int selectedMemberId;
+    private int selectedBookId;
+    private int daysToReturn = 14;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadData();
+    }
+
+    private async Task LoadData()
+    {
+        loading = true;
+        try
+        {
+            members = await Http.GetFromJsonAsync<List<Member>>("members") ?? new();
+
+            var allBooks = await Http.GetFromJsonAsync<List<Book>>("books") ?? new();
+            availableBooks = allBooks.Where(b => b.AvailableCopies > 0).ToList();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error loading data: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            loading = false;
+        }
+    }
+
+    private void Cancel()
+    {
+        MudDialog.Cancel();
+    }
+
+    private async Task Submit()
+    {
+        await form.Validate();
+
+        if (form.IsValid)
+        {
+            loading = true;
+            try
+            {
+                var borrowRequest = new
+                {
+                    MemberId = selectedMemberId,
+                    BookId = selectedBookId,
+                    DaysToReturn = daysToReturn
+                };
+
+                var response = await Http.PostAsJsonAsync("borrow", borrowRequest);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    Snackbar.Add("Book borrowed successfully!", Severity.Success);
+                    MudDialog.Close(DialogResult.Ok(true));
+                }
+                else
+                {
+                    var error = await response.Content.ReadAsStringAsync();
+                    Snackbar.Add($"Error: {error}", Severity.Error);
+                }
+            }
+            catch (Exception ex)
+            {
+                Snackbar.Add($"Error: {ex.Message}", Severity.Error);
+            }
+            finally
+            {
+                loading = false;
+            }
+        }
+    }
+}
