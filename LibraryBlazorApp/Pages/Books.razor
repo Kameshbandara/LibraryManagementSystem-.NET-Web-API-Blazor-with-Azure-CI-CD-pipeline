@@ -11,14 +11,30 @@
 
 <MudPaper Class="pa-4 mb-4">
     <MudGrid>
-        <MudItem xs="12" md="8">
-            <MudTextField @bind-Value="searchString" Placeholder="Search books..." 
-                         Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" 
-                         IconSize="Size.Medium" Immediate="true" />
+        <MudItem xs="12">
+            <MudChipSet T="string" SelectionMode="SelectionMode.SingleSelection" SelectedValue="selectedCategory" SelectedValueChanged="OnCategoryChanged" Class="mt-2">
+                <MudChip T="string" Value="@("All")" Variant="Variant.Filled" Color="Color.Primary">All</MudChip>
+                <MudChip T="string" Value="@("Programming")" Variant="Variant.Filled" Color="Color.Secondary">Programming</MudChip>
+                <MudChip T="string" Value="@("Mathematices")" Variant="Variant.Filled" Color="Color.Tertiary">Mathematices</MudChip>
+                <MudChip T="string" Value="@("Fiction")" Variant="Variant.Filled" Color="Color.Info">Fiction</MudChip>
+                <MudChip T="string" Value="@("Science")" Variant="Variant.Filled" Color="Color.Success">Science</MudChip>
+                <MudChip T="string" Value="@("History")" Variant="Variant.Filled" Color="Color.Warning">History</MudChip>
+                <MudChip T="string" Value="@("Music")" Variant="Variant.Filled" Color="Color.Error">Music</MudChip>
+                <MudChip T="string" Value="@("Biography")" Variant="Variant.Filled" Color="Color.Dark">Biography</MudChip>
+                <MudChip T="string" Value="@("Other")" Variant="Variant.Filled" Color="Color.Default">Other</MudChip>
+            </MudChipSet>
         </MudItem>
+        
+        
+        <MudItem xs="12" md="8">
+            <MudTextField @bind-Value="searchString" Placeholder="Search books..."
+                          Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search"
+                          IconSize="Size.Medium" Immediate="true" />
+        </MudItem>
+
         <MudItem xs="12" md="4" Class="d-flex justify-end">
-            <MudButton Variant="Variant.Filled" Color="Color.Primary" 
-                      StartIcon="@Icons.Material.Filled.Add" OnClick="OpenAddDialog">
+            <MudButton Variant="Variant.Filled" Color="Color.Primary"
+                       StartIcon="@Icons.Material.Filled.Add" OnClick="OpenAddDialog">
                 Add Book
             </MudButton>
         </MudItem>
@@ -72,12 +88,37 @@ else
     private List<Book> books = new();
     private bool loading = true;
     private string searchString = "";
+    private string selectedCategory = "All";
 
-    private IEnumerable<Book> FilteredBooks => 
-        string.IsNullOrWhiteSpace(searchString) 
-            ? books 
-            : books.Where(b => b.Title.Contains(searchString, StringComparison.OrdinalIgnoreCase) || 
-                              b.Author.Contains(searchString, StringComparison.OrdinalIgnoreCase));
+    private IEnumerable<Book> FilteredBooks
+    {
+        get
+        {
+            var filtered = books.AsEnumerable();
+
+            // Filter by category
+            if (!string.IsNullOrEmpty(selectedCategory) && selectedCategory != "All")
+            {
+                filtered = filtered.Where(b => b.Category != null && 
+                    b.Category.Equals(selectedCategory, StringComparison.OrdinalIgnoreCase));
+            }
+
+            // Filter by search text
+            if (!string.IsNullOrWhiteSpace(searchString))
+            {
+                filtered = filtered.Where(b => 
+                    b.Title.Contains(searchString, StringComparison.OrdinalIgnoreCase) || 
+                    b.Author.Contains(searchString, StringComparison.OrdinalIgnoreCase));
+            }
+
+            return filtered;
+        }
+    }
+
+    private void OnCategoryChanged(string category)
+    {
+        selectedCategory = category ?? "All";
+    }
 
     protected override async Task OnInitializedAsync()
     {

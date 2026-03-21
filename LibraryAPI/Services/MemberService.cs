@@ -69,9 +69,10 @@ namespace LibraryAPI.Services
             }
             catch (Exception ex)
             {
+                var errorMsg = ex.InnerException?.Message ?? ex.Message;
                 return ServiceResult<Member>.FailureResult(
                     "Failed to register member",
-                    new List<string> { ex.Message }
+                    new List<string> { errorMsg }
                 );
             }
         }
@@ -227,8 +228,25 @@ namespace LibraryAPI.Services
         private async Task<string> GenerateMembershipNumber()
         {
             var year = DateTime.Now.Year;
-            var count = await _context.Members.CountAsync() + 1;
-            return $"MEM{year}{count:D4}";
+            var prefix = $"MEM{year}";
+
+            // Find the highest existing membership number for this year
+            var lastNumber = await _context.Members
+                .Where(m => m.MembershipNumber.StartsWith(prefix))
+                .Select(m => m.MembershipNumber)
+                .OrderByDescending(n => n)
+                .FirstOrDefaultAsync();
+
+            int nextNumber = 1;
+            if (lastNumber != null && lastNumber.Length > prefix.Length)
+            {
+                if (int.TryParse(lastNumber.Substring(prefix.Length), out int current))
+                {
+                    nextNumber = current + 1;
+                }
+            }
+
+            return $"{prefix}{nextNumber:D4}";
         }
     }
 }
