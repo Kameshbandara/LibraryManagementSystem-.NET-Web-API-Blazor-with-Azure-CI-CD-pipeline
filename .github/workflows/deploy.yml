@@ -1,0 +1,69 @@
+name: Deploy Full Stack App to Azure
+
+on:
+  push:
+    branches:
+      - main
+
+env:
+  DOTNET_VERSION: '8.0.x'
+
+jobs:
+
+  backend:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v3
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v3
+      with:
+        dotnet-version: ${{ env.DOTNET_VERSION }}
+
+    - name: Restore API
+      run: dotnet restore ./LibraryAPI/LibraryAPI.csproj
+
+    - name: Build API
+      run: dotnet build ./LibraryAPI/LibraryAPI.csproj --configuration Release --no-restore
+
+    - name: Publish API
+      run: dotnet publish ./LibraryAPI/LibraryAPI.csproj -c Release -o ./publish-api
+
+    - name: Deploy API
+      uses: azure/webapps-deploy@v2
+      with:
+        app-name: library-api-app
+        publish-profile: ${{ secrets.AZURE_API_PUBLISH_PROFILE }}
+        package: ./publish-api
+
+
+  frontend:
+    runs-on: ubuntu-latest
+    needs: backend
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v3
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v3
+      with:
+        dotnet-version: ${{ env.DOTNET_VERSION }}
+
+    - name: Restore Blazor
+      run: dotnet restore ./LibraryBlazorApp/LibraryBlazorApp.csproj
+
+    - name: Build Blazor
+      run: dotnet build ./LibraryBlazorApp/LibraryBlazorApp.csproj --configuration Release --no-restore
+
+    - name: Publish Blazor
+      run: dotnet publish ./LibraryBlazorApp/LibraryBlazorApp.csproj -c Release -o ./publish-blazor
+
+    - name: Deploy Blazor
+      uses: azure/webapps-deploy@v2
+      with:
+        app-name: library-blazor-app
+        publish-profile: ${{ secrets.AZURE_BLAZOR_PUBLISH_PROFILE }}
+        package: ./publish-blazor
