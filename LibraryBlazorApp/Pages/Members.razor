@@ -94,7 +94,7 @@ else
         loading = true;
         try
         {
-            members = await Http.GetFromJsonAsync<List<Member>>("members") ?? new();
+            members = await Http.GetFromJsonAsync<List<Member>>("api/members") ?? new();
             Snackbar.Add($"Loaded {members.Count} members", Severity.Success);
         }
         catch (Exception ex)
@@ -144,7 +144,7 @@ else
         {
             try
             {
-                var response = await Http.DeleteAsync($"members/{member.Id}");
+                var response = await Http.DeleteAsync($"api/members/{member.Id}");
                 if (response.IsSuccessStatusCode)
                 {
                     Snackbar.Add("Member deleted successfully", Severity.Success);

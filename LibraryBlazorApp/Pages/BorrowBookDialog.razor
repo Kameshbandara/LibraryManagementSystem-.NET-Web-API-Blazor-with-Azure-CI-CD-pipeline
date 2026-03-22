@@ -86,9 +86,9 @@
         loading = true;
         try
         {
-            members = await Http.GetFromJsonAsync<List<Member>>("members") ?? new();
+            members = await Http.GetFromJsonAsync<List<Member>>("api/members") ?? new();
 
-            var allBooks = await Http.GetFromJsonAsync<List<Book>>("books") ?? new();
+            var allBooks = await Http.GetFromJsonAsync<List<Book>>("api/books") ?? new();
             availableBooks = allBooks.Where(b => b.AvailableCopies > 0).ToList();
         }
         catch (Exception ex)
@@ -122,7 +122,7 @@
                     DaysToReturn = daysToReturn
                 };
 
-                var response = await Http.PostAsJsonAsync("borrow", borrowRequest);
+                var response = await Http.PostAsJsonAsync("api/borrow", borrowRequest);
 
                 if (response.IsSuccessStatusCode)
                 {

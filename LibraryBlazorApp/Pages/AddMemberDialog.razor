@@ -78,7 +78,7 @@
         {
             try
             {
-                var response = await Http.PostAsJsonAsync("members", member);
+                var response = await Http.PostAsJsonAsync("api/members", member);
 
                 if (response.IsSuccessStatusCode)
                 {

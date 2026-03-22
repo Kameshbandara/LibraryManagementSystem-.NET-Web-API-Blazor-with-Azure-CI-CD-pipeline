@@ -107,7 +107,7 @@
                 book.AvailableCopies = book.TotalCopies;
                 book.Rating = Math.Round(book.Rating, 1);
 
-                var response = await Http.PostAsJsonAsync("books", book);
+                var response = await Http.PostAsJsonAsync("api/books", book);
 
                 if (response.IsSuccessStatusCode)
                 {
