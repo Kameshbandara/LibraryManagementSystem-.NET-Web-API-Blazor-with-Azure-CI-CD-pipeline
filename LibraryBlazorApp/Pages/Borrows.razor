@@ -96,7 +96,7 @@ else
         loading = true;
         try
         {
-            borrows = await Http.GetFromJsonAsync<List<BorrowRecord>>("borrow/active") ?? new();
+            borrows = await Http.GetFromJsonAsync<List<BorrowRecord>>("api/borrow/active") ?? new();
             Snackbar.Add($"Loaded {borrows.Count} active borrows", Severity.Success);
         }
         catch (Exception ex)
@@ -113,7 +113,7 @@ else
     {
         try
         {
-            var response = await Http.PostAsync($"borrow/{borrowId}/return", null);
+            var response = await Http.PostAsync($"api/borrow/{borrowId}/return", null);
             if (response.IsSuccessStatusCode)
             {
                 Snackbar.Add("Book returned successfully!", Severity.Success);

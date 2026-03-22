@@ -130,7 +130,7 @@ else
         loading = true;
         try
         {
-            // books = await Http.GetFromJsonAsync<List<Book>>("books") ?? new();
+           
             books = await Http.GetFromJsonAsync<List<Book>>("api/Books") ?? new();
             Snackbar.Add($"Loaded {books.Count} books", Severity.Success);
         }
@@ -174,7 +174,7 @@ else
         {
             try
             {
-                var response = await Http.DeleteAsync($"books/{book.Id}");
+                var response = await Http.DeleteAsync($"api/books/{book.Id}");
                 if (response.IsSuccessStatusCode)
                 {
                     Snackbar.Add("Book deleted successfully", Severity.Success);
