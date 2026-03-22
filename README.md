@@ -1,9 +1,9 @@
 # Library Management System
 
-Frontend → Blazor ✅
-Backend → .NET Web API ✅
-Database → Azure SQL ✅
-CI/CD → GitHub Actions ✅
+Frontend → Blazor ✅ \
+Backend → .NET Web API ✅\
+Database → Azure SQL ✅\
+CI/CD → GitHub Actions ✅\
 Cloud Hosting → Microsoft Azure ✅
 
 ## 📖 Overview
