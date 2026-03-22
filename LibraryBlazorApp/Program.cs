@@ -14,9 +14,15 @@ builder.Services.AddMudServices();
 
 // Add HttpClient for API calls
 // ?? IMPORTANT: Point to your LibraryAPI URL
+
+//builder.Services.AddScoped(sp => new HttpClient
+//{
+//    BaseAddress = new Uri("https://localhost:7163/api/")  
+//});
+
 builder.Services.AddScoped(sp => new HttpClient
 {
-    BaseAddress = new Uri("https://localhost:7163/api/")  
+    BaseAddress = new Uri("https://library-api-app-bth6dbgshuatgbfp.southindia-01.azurewebsites.net/")
 });
 
 var app = builder.Build();
