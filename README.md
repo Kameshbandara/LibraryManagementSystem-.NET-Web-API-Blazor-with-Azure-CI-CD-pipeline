@@ -1,5 +1,11 @@
 # Library Management System
 
+Frontend → Blazor ✅
+Backend → .NET Web API ✅
+Database → Azure SQL ✅
+CI/CD → GitHub Actions ✅
+Cloud Hosting → Microsoft Azure ✅
+
 ## 📖 Overview
 The **Library Management System** is a full-stack, enterprise-ready web application designed to streamline and automate day-to-day library operations. Built with modern .NET technologies, it offers a robust RESTful Web API backend seamlessly integrated with a fast, responsive Blazor Server frontend UI. The system easily handles creating and managing books, member registrations, and tracking book-borrowing lifecycles. 
 
