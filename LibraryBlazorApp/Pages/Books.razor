@@ -130,7 +130,8 @@ else
         loading = true;
         try
         {
-            books = await Http.GetFromJsonAsync<List<Book>>("books") ?? new();
+            // books = await Http.GetFromJsonAsync<List<Book>>("books") ?? new();
+            books = await Http.GetFromJsonAsync<List<Book>>("api/Books") ?? new();
             Snackbar.Add($"Loaded {books.Count} books", Severity.Success);
         }
         catch (Exception ex)
