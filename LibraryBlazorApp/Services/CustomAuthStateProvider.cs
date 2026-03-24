@@ -17,6 +17,9 @@ namespace LibraryBlazorApp.Services
 
         public override async Task<AuthenticationState> GetAuthenticationStateAsync()
         {
+            // Simulate a loading delay as requested to show the loading UI
+            await Task.Delay(2000);
+
             try
             {
                 var token = await _localStorage.GetItemAsStringAsync("accessToken");
