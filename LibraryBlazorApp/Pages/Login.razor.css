@@ -1,0 +1,107 @@
+.login-container {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh !important;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    position: relative;
+    padding: 20px;
+}
+
+.login-container::before {
+    content: "";
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 60%);
+    animation: rotate 20s linear infinite;
+}
+
+@keyframes rotate {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.glass-card {
+    background: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 24px !important;
+    box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+    overflow: hidden;
+    animation: slideUp 0.8s ease-out;
+}
+
+@keyframes slideUp {
+    from { transform: translateY(50px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}
+
+.logo-container {
+    padding: 30px 0 10px 0;
+}
+
+.logo-icon {
+    font-size: 5rem !important;
+    color: #764ba2 !important;
+    filter: drop-shadow(0 4px 6px rgba(0,0,0,0.1));
+    transition: transform 0.3s ease;
+}
+
+.logo-icon:hover {
+    transform: scale(1.1) rotate(5deg);
+}
+
+.title-text {
+    font-weight: 800 !important;
+    background: linear-gradient(to right, #667eea, #764ba2);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    letter-spacing: -1px;
+}
+
+.subtitle-text {
+    color: #666 !important;
+    font-weight: 500;
+}
+
+.tab-selector {
+    border-radius: 12px;
+    background: rgba(0, 0, 0, 0.05);
+    padding: 4px;
+    margin-bottom: 24px;
+}
+
+.modern-btn {
+    height: 54px !important;
+    border-radius: 14px !important;
+    font-weight: 700 !important;
+    letter-spacing: 0.5px !important;
+    background: linear-gradient(to right, #667eea, #764ba2) !important;
+    box-shadow: 0 4px 15px rgba(118, 75, 162, 0.4) !important;
+    transition: all 0.3s ease !important;
+}
+
+.modern-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(118, 75, 162, 0.6) !important;
+}
+
+.input-field {
+    margin-bottom: 16px !important;
+}
+
+.input-field fieldset {
+    border-radius: 14px !important;
+    border-color: rgba(0, 0, 0, 0.1) !important;
+}
+
+.input-field:focus-within fieldset {
+    border-color: #764ba2 !important;
+    border-width: 2px !important;
+}
