@@ -16,6 +16,8 @@ namespace LibraryAPI.Data
         public DbSet<Book> Books { get; set; }
         public DbSet<Member> Members { get; set; }
         public DbSet<BorrowRecord> BorrowRecords { get; set; }
+        public DbSet<User> Users { get; set; }
+        public DbSet<RefreshToken> RefreshTokens { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -94,6 +96,37 @@ namespace LibraryAPI.Data
                 // Ignore computed properties
                 entity.Ignore(br => br.IsOverdue);
                 entity.Ignore(br => br.DaysOverdue);
+            });
+
+            // ═══════════════════════════════════════
+            // USER CONFIGURATION
+            // ═══════════════════════════════════════
+            modelBuilder.Entity<User>(entity =>
+            {
+                entity.HasIndex(u => u.Email).IsUnique();
+                entity.HasIndex(u => u.Username).IsUnique();
+
+                entity.Property(u => u.CreatedAt)
+                    .HasDefaultValueSql("GETUTCDATE()");
+            });
+
+            // ═══════════════════════════════════════
+            // REFRESH TOKEN CONFIGURATION
+            // ═══════════════════════════════════════
+            modelBuilder.Entity<RefreshToken>(entity =>
+            {
+                entity.HasOne(rt => rt.User)
+                    .WithMany(u => u.RefreshTokens)
+                    .HasForeignKey(rt => rt.UserId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                entity.Property(rt => rt.CreatedAt)
+                    .HasDefaultValueSql("GETUTCDATE()");
+
+                // Ignore computed properties
+                entity.Ignore(rt => rt.IsExpired);
+                entity.Ignore(rt => rt.IsRevoked);
+                entity.Ignore(rt => rt.IsActive);
             });
 
             // ═══════════════════════════════════════

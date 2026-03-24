@@ -1,6 +1,9 @@
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Web;
+using Microsoft.AspNetCore.Components.Authorization;
 using MudBlazor.Services;
+using Blazored.LocalStorage;
+using LibraryBlazorApp.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -11,6 +14,16 @@ builder.Services.AddServerSideBlazor();
 // Add MudBlazor services
 builder.Services.AddMudServices();
 
+// Add Blazored LocalStorage
+builder.Services.AddBlazoredLocalStorage();
+
+// Add Authentication State Provider
+builder.Services.AddScoped<CustomAuthStateProvider>();
+builder.Services.AddScoped<AuthenticationStateProvider>(provider =>
+    provider.GetRequiredService<CustomAuthStateProvider>());
+
+// Add Auth Service
+builder.Services.AddScoped<AuthService>();
 
 // Add HttpClient for API calls
 // ?? IMPORTANT: Point to your LibraryAPI URL
