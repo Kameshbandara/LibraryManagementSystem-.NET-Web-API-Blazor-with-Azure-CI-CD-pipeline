@@ -1,4 +1,7 @@
 @inherits LayoutComponentBase
+@using LibraryBlazorApp.Services
+@inject AuthService AuthService
+@inject NavigationManager Navigation
 
 <MudThemeProvider />
 <MudDialogProvider />
@@ -10,6 +13,18 @@
         <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" OnClick="@((e) => DrawerToggle())" />
         <MudText Typo="Typo.h5" Class="ml-3">Library Management System</MudText>
         <MudSpacer />
+        
+        <AuthorizeView>
+            <Authorized>
+                <MudChip T="string" Icon="@Icons.Material.Filled.Person" Color="Color.Surface" Variant="Variant.Outlined">
+                    @username
+                </MudChip>
+                <MudIconButton Icon="@Icons.Material.Filled.Logout" 
+                               Color="Color.Inherit" 
+                               OnClick="HandleLogout"
+                               Title="Logout" />
+            </Authorized>
+        </AuthorizeView>
     </MudAppBar>
     
     <MudDrawer @bind-Open="drawerOpen" ClipMode="DrawerClipMode.Always" Elevation="2">
@@ -25,9 +40,25 @@
 
 @code {
     private bool drawerOpen = true;
+    private string username = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            username = await AuthService.GetUsernameAsync();
+        }
+        catch { }
+    }
 
     private void DrawerToggle()
     {
         drawerOpen = !drawerOpen;
+    }
+
+    private async Task HandleLogout()
+    {
+        await AuthService.LogoutAsync();
+        Navigation.NavigateTo("/login", forceLoad: true);
     }
 }

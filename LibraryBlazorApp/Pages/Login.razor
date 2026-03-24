@@ -1,0 +1,252 @@
+@page "/login"
+@using LibraryBlazorApp.Models
+@using LibraryBlazorApp.Services
+@inject AuthService AuthService
+@inject NavigationManager Navigation
+
+<PageTitle>Login - Library Management System</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.Small" Class="d-flex align-center" Style="min-height: 80vh;">
+    <MudCard Elevation="8" Class="rounded-lg pa-4" Style="width: 100%;">
+        
+        @* ═══════════════════════════════════════ *@
+        @* HEADER *@
+        @* ═══════════════════════════════════════ *@
+        <MudCardHeader Class="pb-0">
+            <CardHeaderContent>
+                <div class="d-flex flex-column align-center">
+                    <MudIcon Icon="@Icons.Material.Filled.LocalLibrary" 
+                             Color="Color.Primary" 
+                             Style="font-size: 4rem;" />
+                    <MudText Typo="Typo.h4" Class="mt-2" Align="Align.Center">
+                        Library Management
+                    </MudText>
+                    <MudText Typo="Typo.body2" Color="Color.Secondary" Align="Align.Center">
+                        @(isLoginMode ? "Sign in to your account" : "Create a new account")
+                    </MudText>
+                </div>
+            </CardHeaderContent>
+        </MudCardHeader>
+
+        <MudCardContent>
+            @* ═══════════════════════════════════════ *@
+            @* TAB SELECTOR *@
+            @* ═══════════════════════════════════════ *@
+            <MudTabs @bind-ActivePanelIndex="activeTab" 
+                     Centered="true" 
+                     Rounded="true" 
+                     ApplyEffectsToContainer="true" 
+                     Class="mt-2 mb-4"
+                     Color="Color.Primary">
+                
+                @* ─────────── LOGIN TAB ─────────── *@
+                <MudTabPanel Text="Login" Icon="@Icons.Material.Filled.Login">
+                    <EditForm Model="@loginModel" OnValidSubmit="HandleLogin">
+                        <DataAnnotationsValidator />
+
+                        <MudTextField @bind-Value="loginModel.Email"
+                                      Label="Email"
+                                      Variant="Variant.Outlined"
+                                      InputType="InputType.Email"
+                                      Adornment="Adornment.Start"
+                                      AdornmentIcon="@Icons.Material.Filled.Email"
+                                      Class="mt-4"
+                                      For="@(() => loginModel.Email)" />
+
+                        <MudTextField @bind-Value="loginModel.Password"
+                                      Label="Password"
+                                      Variant="Variant.Outlined"
+                                      InputType="@loginPasswordInputType"
+                                      Adornment="Adornment.End"
+                                      AdornmentIcon="@loginPasswordIcon"
+                                      OnAdornmentClick="ToggleLoginPasswordVisibility"
+                                      Class="mt-3"
+                                      For="@(() => loginModel.Password)" />
+
+                        @if (!string.IsNullOrEmpty(loginError))
+                        {
+                            <MudAlert Severity="Severity.Error" Class="mt-3" Dense="true" Variant="Variant.Filled">
+                                @loginError
+                            </MudAlert>
+                        }
+
+                        <MudButton ButtonType="ButtonType.Submit"
+                                   Variant="Variant.Filled"
+                                   Color="Color.Primary"
+                                   FullWidth="true"
+                                   Class="mt-4 mb-2"
+                                   Size="Size.Large"
+                                   Disabled="@isLoading">
+                            @if (isLoading)
+                            {
+                                <MudProgressCircular Class="ms-n1" Size="Size.Small" Indeterminate="true" />
+                                <MudText Class="ms-2">Signing in...</MudText>
+                            }
+                            else
+                            {
+                                <MudIcon Icon="@Icons.Material.Filled.Login" Class="mr-2" />
+                                <MudText>Sign In</MudText>
+                            }
+                        </MudButton>
+                    </EditForm>
+                </MudTabPanel>
+
+                @* ─────────── REGISTER TAB ─────────── *@
+                <MudTabPanel Text="Create Account" Icon="@Icons.Material.Filled.PersonAdd">
+                    <EditForm Model="@registerModel" OnValidSubmit="HandleRegister">
+                        <DataAnnotationsValidator />
+
+                        <MudTextField @bind-Value="registerModel.Username"
+                                      Label="Username"
+                                      Variant="Variant.Outlined"
+                                      InputType="InputType.Text"
+                                      Adornment="Adornment.Start"
+                                      AdornmentIcon="@Icons.Material.Filled.Person"
+                                      Class="mt-4"
+                                      For="@(() => registerModel.Username)" />
+
+                        <MudTextField @bind-Value="registerModel.Email"
+                                      Label="Email"
+                                      Variant="Variant.Outlined"
+                                      InputType="InputType.Email"
+                                      Adornment="Adornment.Start"
+                                      AdornmentIcon="@Icons.Material.Filled.Email"
+                                      Class="mt-3"
+                                      For="@(() => registerModel.Email)" />
+
+                        <MudTextField @bind-Value="registerModel.Password"
+                                      Label="Password"
+                                      Variant="Variant.Outlined"
+                                      InputType="@registerPasswordInputType"
+                                      Adornment="Adornment.End"
+                                      AdornmentIcon="@registerPasswordIcon"
+                                      OnAdornmentClick="ToggleRegisterPasswordVisibility"
+                                      Class="mt-3"
+                                      For="@(() => registerModel.Password)" />
+
+                        <MudTextField @bind-Value="registerModel.ConfirmPassword"
+                                      Label="Confirm Password"
+                                      Variant="Variant.Outlined"
+                                      InputType="@confirmPasswordInputType"
+                                      Adornment="Adornment.End"
+                                      AdornmentIcon="@confirmPasswordIcon"
+                                      OnAdornmentClick="ToggleConfirmPasswordVisibility"
+                                      Class="mt-3"
+                                      For="@(() => registerModel.ConfirmPassword)" />
+
+                        @if (!string.IsNullOrEmpty(registerError))
+                        {
+                            <MudAlert Severity="Severity.Error" Class="mt-3" Dense="true" Variant="Variant.Filled">
+                                @registerError
+                            </MudAlert>
+                        }
+
+                        @if (!string.IsNullOrEmpty(registerSuccess))
+                        {
+                            <MudAlert Severity="Severity.Success" Class="mt-3" Dense="true" Variant="Variant.Filled">
+                                @registerSuccess
+                            </MudAlert>
+                        }
+
+                        <MudButton ButtonType="ButtonType.Submit"
+                                   Variant="Variant.Filled"
+                                   Color="Color.Primary"
+                                   FullWidth="true"
+                                   Class="mt-4 mb-2"
+                                   Size="Size.Large"
+                                   Disabled="@isLoading">
+                            @if (isLoading)
+                            {
+                                <MudProgressCircular Class="ms-n1" Size="Size.Small" Indeterminate="true" />
+                                <MudText Class="ms-2">Creating account...</MudText>
+                            }
+                            else
+                            {
+                                <MudIcon Icon="@Icons.Material.Filled.PersonAdd" Class="mr-2" />
+                                <MudText>Create Account</MudText>
+                            }
+                        </MudButton>
+                    </EditForm>
+                </MudTabPanel>
+            </MudTabs>
+        </MudCardContent>
+    </MudCard>
+</MudContainer>
+
+@code {
+    // ═══════════════════════════════════════
+    // MODELS
+    // ═══════════════════════════════════════
+    private LoginModel loginModel = new();
+    private RegisterModel registerModel = new();
+
+    // ═══════════════════════════════════════
+    // STATE
+    // ═══════════════════════════════════════
+    private bool isLoading;
+    private string loginError = "";
+    private string registerError = "";
+    private string registerSuccess = "";
+    private int activeTab;
+    private bool isLoginMode => activeTab == 0;
+
+    // Password visibility toggles
+    private bool loginPasswordVisible;
+    private bool registerPasswordVisible;
+    private bool confirmPasswordVisible;
+
+    private InputType loginPasswordInputType => loginPasswordVisible ? InputType.Text : InputType.Password;
+    private InputType registerPasswordInputType => registerPasswordVisible ? InputType.Text : InputType.Password;
+    private InputType confirmPasswordInputType => confirmPasswordVisible ? InputType.Text : InputType.Password;
+
+    private string loginPasswordIcon => loginPasswordVisible ? Icons.Material.Filled.Visibility : Icons.Material.Filled.VisibilityOff;
+    private string registerPasswordIcon => registerPasswordVisible ? Icons.Material.Filled.Visibility : Icons.Material.Filled.VisibilityOff;
+    private string confirmPasswordIcon => confirmPasswordVisible ? Icons.Material.Filled.Visibility : Icons.Material.Filled.VisibilityOff;
+
+    // ═══════════════════════════════════════
+    // HANDLERS
+    // ═══════════════════════════════════════
+
+    private async Task HandleLogin()
+    {
+        isLoading = true;
+        loginError = "";
+
+        var result = await AuthService.LoginAsync(loginModel);
+
+        if (result.Success)
+        {
+            Navigation.NavigateTo("/", forceLoad: true);
+        }
+        else
+        {
+            loginError = result.Message;
+        }
+
+        isLoading = false;
+    }
+
+    private async Task HandleRegister()
+    {
+        isLoading = true;
+        registerError = "";
+        registerSuccess = "";
+
+        var result = await AuthService.RegisterAsync(registerModel);
+
+        if (result.Success)
+        {
+            Navigation.NavigateTo("/", forceLoad: true);
+        }
+        else
+        {
+            registerError = result.Message;
+        }
+
+        isLoading = false;
+    }
+
+    private void ToggleLoginPasswordVisibility() => loginPasswordVisible = !loginPasswordVisible;
+    private void ToggleRegisterPasswordVisibility() => registerPasswordVisible = !registerPasswordVisible;
+    private void ToggleConfirmPasswordVisibility() => confirmPasswordVisible = !confirmPasswordVisible;
+}
