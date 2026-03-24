@@ -4,13 +4,13 @@
 @inject NavigationManager Navigation
 
 <MudLayout>
-    <MudAppBar Elevation="1">
-        <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" OnClick="@((e) => DrawerToggle())" />
-        <MudText Typo="Typo.h5" Class="ml-3">Library Management System</MudText>
-        <MudSpacer />
-        
-        <AuthorizeView>
-            <Authorized>
+    <AuthorizeView>
+        <Authorized>
+            <MudAppBar Elevation="1">
+                <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" OnClick="@((e) => DrawerToggle())" />
+                <MudText Typo="Typo.h5" Class="ml-3">Library Management System</MudText>
+                <MudSpacer />
+                
                 <MudChip T="string" Icon="@Icons.Material.Filled.Person" Color="Color.Surface" Variant="Variant.Outlined">
                     @username
                 </MudChip>
@@ -18,16 +18,16 @@
                                Color="Color.Inherit" 
                                OnClick="HandleLogout"
                                Title="Logout" />
-            </Authorized>
-        </AuthorizeView>
-    </MudAppBar>
-    
-    <MudDrawer @bind-Open="drawerOpen" ClipMode="DrawerClipMode.Always" Elevation="2">
-        <NavMenu />
-    </MudDrawer>
+            </MudAppBar>
+            
+            <MudDrawer @bind-Open="drawerOpen" ClipMode="DrawerClipMode.Always" Elevation="2">
+                <NavMenu />
+            </MudDrawer>
+        </Authorized>
+    </AuthorizeView>
     
     <MudMainContent>
-        <MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-4">
+        <MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="@(isAuthorized ? "mt-4" : "pa-0")">
             @Body
         </MudContainer>
     </MudMainContent>
@@ -36,14 +36,24 @@
 @code {
     private bool drawerOpen = true;
     private string username = "";
+    private bool isAuthorized;
 
-    protected override async Task OnInitializedAsync()
+    [CascadingParameter]
+    private Task<AuthenticationState> AuthStateTask { get; set; } = null!;
+
+    protected override async Task OnParametersSetAsync()
     {
-        try
+        var authState = await AuthStateTask;
+        isAuthorized = authState.User.Identity?.IsAuthenticated ?? false;
+
+        if (isAuthorized)
         {
-            username = await AuthService.GetUsernameAsync();
+            try
+            {
+                username = await AuthService.GetUsernameAsync();
+            }
+            catch { }
         }
-        catch { }
     }
 
     private void DrawerToggle()
